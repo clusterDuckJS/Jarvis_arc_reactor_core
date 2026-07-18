@@ -20,6 +20,10 @@ const presets: ColorPreset[] = [
   { name: "Red", color: { r: 255, g: 77, b: 90 } },
 ];
 
+const wheelSize = 260;
+const wheelInset = 4;
+const wheelRadius = wheelSize / 2 - wheelInset;
+
 interface ColorWheelProps {
   color: RgbColor;
   onChange: (color: RgbColor) => void;
@@ -37,28 +41,27 @@ export const ColorWheel = ({ color, onChange }: ColorWheelProps): JSX.Element =>
       return;
     }
 
-    const size = 260;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, size, size);
+    const bitmapSize = wheelSize * dpr;
+    const bitmapRadius = wheelRadius * dpr;
+    const bitmapCenter = bitmapSize / 2;
 
-    const image = ctx.createImageData(size, size);
-    const radius = size / 2 - 4;
+    canvas.width = bitmapSize;
+    canvas.height = bitmapSize;
+    ctx.clearRect(0, 0, bitmapSize, bitmapSize);
 
-    for (let y = 0; y < size; y += 1) {
-      for (let x = 0; x < size; x += 1) {
-        const dx = x - size / 2;
-        const dy = y - size / 2;
+    const image = ctx.createImageData(bitmapSize, bitmapSize);
+
+    for (let y = 0; y < bitmapSize; y += 1) {
+      for (let x = 0; x < bitmapSize; x += 1) {
+        const dx = x - bitmapCenter;
+        const dy = y - bitmapCenter;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const index = (y * size + x) * 4;
+        const index = (y * bitmapSize + x) * 4;
 
-        if (distance <= radius) {
+        if (distance <= bitmapRadius) {
           const hue = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
-          const saturation = distance / radius;
+          const saturation = distance / bitmapRadius;
           const rgb = hsvToRgb({ h: hue, s: saturation, v: 1 });
           image.data[index] = rgb.r;
           image.data[index + 1] = rgb.g;
@@ -81,7 +84,7 @@ export const ColorWheel = ({ color, onChange }: ColorWheelProps): JSX.Element =>
       const rect = canvas.getBoundingClientRect();
       const x = clientX - rect.left - rect.width / 2;
       const y = clientY - rect.top - rect.height / 2;
-      const radius = rect.width / 2 - 4;
+      const radius = Math.min(rect.width, rect.height) / 2 - wheelInset;
       const distance = Math.min(radius, Math.sqrt(x * x + y * y));
       const next: HsvColor = {
         h: ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360,
@@ -93,18 +96,18 @@ export const ColorWheel = ({ color, onChange }: ColorWheelProps): JSX.Element =>
     [hsv.v, onChange],
   );
 
-  const markerRadius = 126 * hsv.s;
+  const markerRadius = (wheelRadius / wheelSize) * 100 * hsv.s;
   const markerAngle = (hsv.h * Math.PI) / 180;
-  const markerX = 130 + Math.cos(markerAngle) * markerRadius;
-  const markerY = 130 + Math.sin(markerAngle) * markerRadius;
+  const markerX = 50 + Math.cos(markerAngle) * markerRadius;
+  const markerY = 50 + Math.sin(markerAngle) * markerRadius;
 
   return (
-    <div className="glass-panel rounded-lg p-5">
+    <div className="glass-panel rounded-lg p-4 sm:p-5">
       <div className="flex flex-col gap-6 xl:flex-row">
-        <div className="relative mx-auto size-[260px] shrink-0">
+        <div className="relative mx-auto aspect-square w-full max-w-[260px] shrink-0">
           <canvas
             ref={canvasRef}
-            className="size-[260px] rounded-full shadow-bloom"
+            className="size-full touch-none rounded-full shadow-bloom"
             onPointerDown={(event) => {
               event.currentTarget.setPointerCapture(event.pointerId);
               selectFromPointer(event.clientX, event.clientY);
@@ -118,8 +121,8 @@ export const ColorWheel = ({ color, onChange }: ColorWheelProps): JSX.Element =>
           <span
             className="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-bloom"
             style={{
-              left: markerX,
-              top: markerY,
+              left: `${markerX}%`,
+              top: `${markerY}%`,
               background: rgbToCss(color),
             }}
           />
@@ -155,10 +158,10 @@ export const ColorWheel = ({ color, onChange }: ColorWheelProps): JSX.Element =>
                 key={preset.name}
                 type="button"
                 onClick={() => onChange(preset.color)}
-                className="flex items-center gap-2 rounded-md border border-reactor-secondary/[0.12] bg-white/[0.03] px-3 py-2 text-left text-xs font-semibold text-reactor-accent transition hover:border-reactor-secondary/40 hover:bg-white/[0.06]"
+                className="flex min-w-0 items-center gap-2 rounded-md border border-reactor-secondary/[0.12] bg-white/[0.03] px-3 py-2 text-left text-xs font-semibold text-reactor-accent transition hover:border-reactor-secondary/40 hover:bg-white/[0.06]"
               >
-                <span className="size-3 rounded-full shadow-bloom" style={{ background: rgbToCss(preset.color) }} />
-                {preset.name}
+                <span className="size-3 shrink-0 rounded-full shadow-bloom" style={{ background: rgbToCss(preset.color) }} />
+                <span className="min-w-0 truncate">{preset.name}</span>
               </button>
             ))}
           </div>
