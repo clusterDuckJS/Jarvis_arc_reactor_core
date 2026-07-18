@@ -117,6 +117,11 @@ const appendHistory = (
   return next.slice(-72);
 };
 
+const wakeEffects = (effects: EffectsState): EffectsState => ({
+  ...effects,
+  deepSleep: false,
+});
+
 export const useReactorStore = create<ReactorState>()(
   persist(
     (set) => ({
@@ -149,7 +154,11 @@ export const useReactorStore = create<ReactorState>()(
           connectionName: connection?.name ?? "Offline",
           transport: connection?.transport ?? "offline",
         })),
-      setPower: (power) => set(() => ({ power })),
+      setPower: (power) =>
+        set((state) => ({
+          power,
+          effects: power ? wakeEffects(state.effects) : state.effects,
+        })),
       setBrightness: (brightness) => set(() => ({ brightness: clamp(brightness, 0, 255) })),
       setMode: (mode) => set(() => ({ mode })),
       setSpeed: (speed) => set(() => ({ speed: clamp(speed, 0, 255) })),
@@ -226,9 +235,21 @@ export const useReactorStore = create<ReactorState>()(
         mode: state.settings.rememberLastMode ? state.mode : "mark-iii",
         speed: state.speed,
         color: state.color,
-        effects: state.effects,
+        effects: wakeEffects(state.effects),
         settings: state.settings,
       }),
+      merge: (persisted, current) => {
+        const persistedState = persisted as Partial<ReactorState> | undefined;
+
+        return {
+          ...current,
+          ...persistedState,
+          effects: wakeEffects({
+            ...current.effects,
+            ...persistedState?.effects,
+          }),
+        };
+      },
     },
   ),
 );

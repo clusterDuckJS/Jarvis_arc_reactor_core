@@ -158,24 +158,37 @@ const readEffects = (value: unknown, fallback: EffectsState): EffectsState => {
 export const createPacketInput = (
   command: CommandName,
   snapshot: ReactorCommandState,
-): CommandMessage => ({
-  type: "command",
-  command,
-  state: {
-    power: snapshot.power,
-    brightness: clampByte(snapshot.brightness),
-    mode: snapshot.mode,
-    speed: clampByte(snapshot.speed),
-    color: {
-      r: clampByte(snapshot.color.r),
-      g: clampByte(snapshot.color.g),
-      b: clampByte(snapshot.color.b),
+): CommandMessage => {
+  const wakesReactor = command === "POWER_ON" || command === "WAKE";
+  const sleepsReactor = command === "POWER_OFF" || command === "SLEEP";
+  const power = wakesReactor ? true : sleepsReactor ? false : snapshot.power;
+  const effects =
+    power && command !== "SLEEP"
+      ? {
+          ...snapshot.effects,
+          deepSleep: false,
+        }
+      : snapshot.effects;
+
+  return {
+    type: "command",
+    command,
+    state: {
+      power,
+      brightness: clampByte(snapshot.brightness),
+      mode: snapshot.mode,
+      speed: clampByte(snapshot.speed),
+      color: {
+        r: clampByte(snapshot.color.r),
+        g: clampByte(snapshot.color.g),
+        b: clampByte(snapshot.color.b),
+      },
+      effects,
     },
-    effects: snapshot.effects,
-  },
-  sentAt: Date.now(),
-  requestId: createRequestId(),
-});
+    sentAt: Date.now(),
+    requestId: createRequestId(),
+  };
+};
 
 export const encodeJsonMessage = (message: BleJsonMessage): Uint8Array =>
   encoder.encode(JSON.stringify(message));
