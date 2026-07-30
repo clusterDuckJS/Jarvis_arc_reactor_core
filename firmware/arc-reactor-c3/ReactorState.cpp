@@ -1,6 +1,6 @@
 #include "ReactorState.h"
 
-const char *FIRMWARE_VERSION = "1.0.2-c3-json";
+const char *FIRMWARE_VERSION = "1.0.3-c3-json";
 const char *HARDWARE_VERSION = "ESP32-C3 / WS2812B-16 / TTP223";
 
 static ReactorState reactorState;
@@ -226,17 +226,6 @@ void writeStatusJson(JsonDocument &doc, const ReactorState &state, const char *a
   color["g"] = state.color.g;
   color["b"] = state.color.b;
 
-  JsonObject effects = stateJson["effects"].to<JsonObject>();
-  effects["breathing"] = state.effects.breathing;
-  effects["livingPlasma"] = state.effects.livingPlasma;
-  effects["rotatingPlasma"] = state.effects.rotatingPlasma;
-  effects["energySurge"] = state.effects.energySurge;
-  effects["electricalFlicker"] = state.effects.electricalFlicker;
-  effects["colorShift"] = state.effects.colorShift;
-  effects["heartbeat"] = state.effects.heartbeat;
-  effects["deepSleep"] = state.effects.deepSleep;
-  effects["autoWake"] = state.effects.autoWake;
-
   JsonObject diagnostics = doc["diagnostics"].to<JsonObject>();
   diagnostics["batteryPercent"] = state.diagnostics.batteryPercent;
   diagnostics["voltage"] = state.diagnostics.voltage;
@@ -246,10 +235,4 @@ void writeStatusJson(JsonDocument &doc, const ReactorState &state, const char *a
   diagnostics["signalStrength"] = state.diagnostics.signalStrength;
   diagnostics["temperatureC"] = state.diagnostics.temperatureC;
   diagnostics["powerOutput"] = state.diagnostics.powerOutput;
-  diagnostics["plasmaStability"] = state.diagnostics.plasmaStability;
-  diagnostics["magneticContainment"] = state.diagnostics.magneticContainment;
-  diagnostics["latencyMs"] = state.diagnostics.latencyMs;
-  diagnostics["fps"] = state.diagnostics.fps;
-  diagnostics["noiseValue"] = state.diagnostics.noiseValue;
-  diagnostics["fieldRotation"] = state.diagnostics.fieldRotation;
 }

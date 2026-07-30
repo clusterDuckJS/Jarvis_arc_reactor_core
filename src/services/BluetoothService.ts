@@ -264,10 +264,25 @@ export class BluetoothService implements ReactorBleService {
       }
     } catch (error) {
       this.emit({
+        type: "packet",
+        timestamp: Date.now(),
+        direction: "rx",
+        message: {
+          type: "invalid",
+          payload: {
+            message: String(error instanceof Error ? error.message : error),
+            length: raw.length,
+          },
+        },
+        raw,
+      });
+      this.emit({
         type: "log",
         timestamp: Date.now(),
         level: "error",
-        message: `Invalid BLE JSON notification: ${String(error instanceof Error ? error.message : error)}`,
+        message: `Invalid BLE JSON notification (${raw.length} chars): ${String(
+          error instanceof Error ? error.message : error,
+        )}`,
       });
     }
   };
