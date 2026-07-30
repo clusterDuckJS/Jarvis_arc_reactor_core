@@ -7,6 +7,28 @@ import type { BleEvent, BleScanResult } from "@/types/bluetooth";
 
 let unsubscribeBleEvents: (() => void) | null = null;
 
+const requestStatusSnapshot = async (): Promise<void> => {
+  const state = useReactorStore.getState();
+  const packet = createPacketInput("STATUS", {
+    power: state.power,
+    brightness: state.brightness,
+    mode: state.mode,
+    speed: state.speed,
+    color: state.color,
+    effects: state.effects,
+  });
+
+  try {
+    await bleService.sendPacket(packet);
+  } catch (error) {
+    state.addLog({
+      timestamp: Date.now(),
+      level: "warning",
+      message: `Initial status request failed: ${String(error instanceof Error ? error.message : error)}`,
+    });
+  }
+};
+
 const handleBleEvent = (event: BleEvent): void => {
   const store = useReactorStore.getState();
 
@@ -87,6 +109,7 @@ export const useBleController = () => {
 
     try {
       await bleService.connect();
+      await requestStatusSnapshot();
     } catch (error) {
       useReactorStore.getState().addLog({
         timestamp: Date.now(),
