@@ -57,5 +57,6 @@ ReactorState copyReactorState();
 void writeReactorState(const ReactorState &nextState);
 void updateReactorStateFromJson(JsonVariantConst root);
 void updateTouchPower(bool powered);
+void updateBatteryDiagnostics(float batteryVoltage);
 void updateRuntimeDiagnostics(uint32_t nowMs);
 void writeStatusJson(JsonDocument &doc, const ReactorState &state, const char *ackRequestId = nullptr);

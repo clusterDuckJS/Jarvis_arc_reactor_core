@@ -36,6 +36,7 @@ interface ReactorState {
   color: RgbColor;
   effects: EffectsState;
   battery: number;
+  hasTelemetry: boolean;
   diagnostics: ReactorDiagnostics;
   diagnosticsHistory: DiagnosticsSample[];
   settings: ReactorSettings;
@@ -59,9 +60,9 @@ interface ReactorState {
 }
 
 const initialDiagnostics: ReactorDiagnostics = {
-  batteryPercent: 84,
-  voltage: 3.86,
-  estimatedRuntimeMinutes: 124,
+  batteryPercent: 0,
+  voltage: 0,
+  estimatedRuntimeMinutes: 0,
   powerDrawWatts: 1.42,
   signalDbm: -48,
   signalStrength: 82,
@@ -135,6 +136,7 @@ export const useReactorStore = create<ReactorState>()(
       color: { r: 97, g: 232, b: 255 },
       effects: defaultEffects,
       battery: initialDiagnostics.batteryPercent,
+      hasTelemetry: false,
       diagnostics: initialDiagnostics,
       diagnosticsHistory: appendHistory([], initialDiagnostics),
       settings: initialSettings,
@@ -207,6 +209,7 @@ export const useReactorStore = create<ReactorState>()(
           speed: status.speed,
           color: status.color,
           effects: status.effects,
+          hasTelemetry: true,
           diagnostics: status.diagnostics,
           battery: status.diagnostics.batteryPercent,
           diagnosticsHistory: appendHistory(state.diagnosticsHistory, status.diagnostics),

@@ -9,7 +9,7 @@ interface MetricCardProps {
   label: string;
   value: string;
   detail?: string;
-  progress?: number;
+  progress?: number | undefined;
   tone?: "primary" | "success" | "danger" | "warning";
 }
 

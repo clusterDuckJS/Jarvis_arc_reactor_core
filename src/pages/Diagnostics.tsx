@@ -13,6 +13,7 @@ const toVoltageProgress = (voltage: number): number => ((voltage - 3.2) / (4.2 -
 export const Diagnostics = (): JSX.Element => {
   const diagnostics = useReactorStore((state) => state.diagnostics);
   const history = useReactorStore((state) => state.diagnosticsHistory);
+  const hasTelemetry = useReactorStore((state) => state.hasTelemetry);
 
   return (
     <div className="space-y-8">
@@ -25,17 +26,17 @@ export const Diagnostics = (): JSX.Element => {
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Gauge
           label="Battery"
-          value={diagnostics.batteryPercent}
-          displayValue={Math.round(diagnostics.batteryPercent).toString()}
-          detail={formatRuntime(diagnostics.estimatedRuntimeMinutes)}
-          tone={diagnostics.batteryPercent > 24 ? "success" : "danger"}
+          value={hasTelemetry ? diagnostics.batteryPercent : 0}
+          displayValue={hasTelemetry ? Math.round(diagnostics.batteryPercent).toString() : "--"}
+          detail={hasTelemetry ? formatRuntime(diagnostics.estimatedRuntimeMinutes) : "Waiting for reactor telemetry"}
+          tone={!hasTelemetry ? "warning" : diagnostics.batteryPercent > 24 ? "success" : "danger"}
         />
         <Gauge
           label="Voltage"
-          value={toVoltageProgress(diagnostics.voltage)}
-          displayValue={formatNumber(diagnostics.voltage, 2)}
+          value={hasTelemetry ? toVoltageProgress(diagnostics.voltage) : 0}
+          displayValue={hasTelemetry ? formatNumber(diagnostics.voltage, 2) : "--"}
           unit="V"
-          detail="LiPo cell"
+          detail={hasTelemetry ? "LiPo cell" : "Awaiting sample"}
         />
         <Gauge
           label="Runtime"
@@ -77,9 +78,10 @@ export const Diagnostics = (): JSX.Element => {
         <MetricCard
           icon={BatteryCharging}
           label="Battery"
-          value={formatPercent(diagnostics.batteryPercent)}
-          detail={`${formatNumber(diagnostics.voltage, 2)} V`}
-          progress={diagnostics.batteryPercent}
+          value={hasTelemetry ? formatPercent(diagnostics.batteryPercent) : "--"}
+          detail={hasTelemetry ? `${formatNumber(diagnostics.voltage, 2)} V` : "Waiting for reactor telemetry"}
+          progress={hasTelemetry ? diagnostics.batteryPercent : undefined}
+          tone={!hasTelemetry ? "warning" : diagnostics.batteryPercent > 24 ? "success" : "danger"}
         />
         <MetricCard
           icon={Zap}

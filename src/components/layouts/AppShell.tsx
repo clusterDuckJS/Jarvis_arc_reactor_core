@@ -38,6 +38,7 @@ export const AppShell = (): JSX.Element => {
   const connected = useReactorStore((state) => state.connected);
   const transport = useReactorStore((state) => state.transport);
   const battery = useReactorStore((state) => state.battery);
+  const hasTelemetry = useReactorStore((state) => state.hasTelemetry);
   const power = useReactorStore((state) => state.power);
   const mode = useReactorStore((state) => state.mode);
   const diagnostics = useReactorStore((state) => state.diagnostics);
@@ -63,7 +64,7 @@ export const AppShell = (): JSX.Element => {
             <div className="flex items-center gap-2">
               <div className="hidden items-center gap-2 rounded-full border border-reactor-secondary/[0.15] bg-white/[0.04] px-3 py-2 text-xs text-reactor-muted sm:flex">
                 <BatteryCharging className="size-4 text-reactor-success" />
-                {formatPercent(battery)}
+                {hasTelemetry ? formatPercent(battery) : "--"}
               </div>
               <div className="hidden sm:block">
                 <StatusPill connected={connected} transport={transport} />

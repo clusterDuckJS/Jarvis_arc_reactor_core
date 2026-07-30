@@ -12,6 +12,7 @@ export const Dashboard = (): JSX.Element => {
   const { connect, disconnect, connected, connecting } = useBleController();
   const state = useReactorStore();
   const diagnostics = state.diagnostics;
+  const hasBatteryTelemetry = state.hasTelemetry;
 
   return (
     <div className="space-y-8">
@@ -49,10 +50,14 @@ export const Dashboard = (): JSX.Element => {
           <MetricCard
             icon={BatteryCharging}
             label="Battery"
-            value={formatPercent(state.battery)}
-            detail={`${formatNumber(diagnostics.voltage, 2)} V / ${formatRuntime(diagnostics.estimatedRuntimeMinutes)}`}
-            progress={state.battery}
-            tone={state.battery > 24 ? "success" : "danger"}
+            value={hasBatteryTelemetry ? formatPercent(state.battery) : "--"}
+            detail={
+              hasBatteryTelemetry
+                ? `${formatNumber(diagnostics.voltage, 2)} V / ${formatRuntime(diagnostics.estimatedRuntimeMinutes)}`
+                : "Waiting for reactor telemetry"
+            }
+            progress={hasBatteryTelemetry ? state.battery : undefined}
+            tone={!hasBatteryTelemetry ? "warning" : state.battery > 24 ? "success" : "danger"}
           />
           <MetricCard
             icon={Zap}

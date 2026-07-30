@@ -1,10 +1,12 @@
 #include "ReactorState.h"
 
-const char *FIRMWARE_VERSION = "1.0.1-c3-json";
+const char *FIRMWARE_VERSION = "1.0.2-c3-json";
 const char *HARDWARE_VERSION = "ESP32-C3 / WS2812B-16 / TTP223";
 
 static ReactorState reactorState;
 static portMUX_TYPE reactorMux = portMUX_INITIALIZER_UNLOCKED;
+static const float BATTERY_EMPTY_VOLTAGE = 3.0f;
+static const float BATTERY_FULL_VOLTAGE = 4.2f;
 
 static uint8_t clampByte(int value) {
   if (value < 0) {
@@ -32,6 +34,12 @@ static void copyMode(char *target, const char *mode) {
 
 static bool mergeBool(JsonVariantConst value, bool fallback) {
   return value.is<bool>() ? value.as<bool>() : fallback;
+}
+
+static float voltageToBatteryPercent(float voltage) {
+  const float percent =
+    ((voltage - BATTERY_EMPTY_VOLTAGE) / (BATTERY_FULL_VOLTAGE - BATTERY_EMPTY_VOLTAGE)) * 100.0f;
+  return clampFloat(percent, 0.0f, 100.0f);
 }
 
 static ReactorEffects defaultEffects() {
@@ -164,6 +172,13 @@ void updateTouchPower(bool powered) {
   portEXIT_CRITICAL(&reactorMux);
 }
 
+void updateBatteryDiagnostics(float batteryVoltage) {
+  portENTER_CRITICAL(&reactorMux);
+  reactorState.diagnostics.voltage = batteryVoltage;
+  reactorState.diagnostics.batteryPercent = voltageToBatteryPercent(batteryVoltage);
+  portEXIT_CRITICAL(&reactorMux);
+}
+
 void updateRuntimeDiagnostics(uint32_t nowMs) {
   ReactorState next = copyReactorState();
   const float elapsed = nowMs / 1000.0f;
@@ -171,9 +186,9 @@ void updateRuntimeDiagnostics(uint32_t nowMs) {
   const float wave = sinf(elapsed * 0.73f);
   ReactorDiagnostics diagnostics = next.diagnostics;
 
-  diagnostics.voltage = 3.78f + wave * 0.04f - powerFactor * 0.05f;
-  diagnostics.batteryPercent = clampFloat(82.0f - powerFactor * 2.8f + wave * 1.2f, 5.0f, 100.0f);
-  diagnostics.estimatedRuntimeMinutes = clampFloat(170.0f - powerFactor * 82.0f, 12.0f, 220.0f);
+  diagnostics.batteryPercent = clampFloat(diagnostics.batteryPercent, 0.0f, 100.0f);
+  diagnostics.estimatedRuntimeMinutes =
+    clampFloat((diagnostics.batteryPercent / 100.0f) * (170.0f - powerFactor * 82.0f), 0.0f, 220.0f);
   diagnostics.powerDrawWatts = 0.16f + powerFactor * 1.85f;
   diagnostics.signalDbm = -46;
   diagnostics.signalStrength = 86.0f;
